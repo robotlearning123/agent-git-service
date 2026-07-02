@@ -13,7 +13,7 @@ type capturedQuery struct {
 	Vars []any
 }
 
-func newAuditDryRunMySQLDB(t *testing.T) (*gorm.DB, *capturedQuery) {
+func newQueryCaptureDryRunMySQLDB(t *testing.T) (*gorm.DB, *capturedQuery) {
 	t.Helper()
 
 	gdb, err := gorm.Open(mysql.New(mysql.Config{
@@ -38,7 +38,7 @@ func newAuditDryRunMySQLDB(t *testing.T) (*gorm.DB, *capturedQuery) {
 }
 
 func TestListOrgAuditLogEscapesPhraseLikeWildcards(t *testing.T) {
-	gdb, captured := newAuditDryRunMySQLDB(t)
+	gdb, captured := newQueryCaptureDryRunMySQLDB(t)
 	svc := &Service{DB: gdb}
 
 	_, err := svc.ListOrgAuditLog(context.Background(), 42, AuditLogFilters{Phrase: `50%_off\`})
@@ -64,7 +64,7 @@ func TestListOrgAuditLogEscapesPhraseLikeWildcards(t *testing.T) {
 }
 
 func TestListOrgAuditLogPlainPhraseStillSubstringMatch(t *testing.T) {
-	gdb, captured := newAuditDryRunMySQLDB(t)
+	gdb, captured := newQueryCaptureDryRunMySQLDB(t)
 	svc := &Service{DB: gdb}
 
 	_, err := svc.ListOrgAuditLog(context.Background(), 42, AuditLogFilters{Phrase: "add_member"})
