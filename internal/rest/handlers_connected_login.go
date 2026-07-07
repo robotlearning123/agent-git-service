@@ -43,16 +43,12 @@ func (d *Deps) ConnectedCallback(w http.ResponseWriter, r *http.Request) {
 
 	state := strings.TrimSpace(r.URL.Query().Get("state"))
 	cookie, err := r.Cookie(connectedLoginStateCookieName)
-	stateValidated := false
-	if err == nil {
-		if state == "" || subtle.ConstantTimeCompare([]byte(strings.TrimSpace(cookie.Value)), []byte(state)) != 1 {
-			clearStateCookie()
-			respond.ValidationFailed(w, "invalid or missing state")
-			return
-		}
-		stateValidated = true
+	if err != nil || state == "" || subtle.ConstantTimeCompare([]byte(strings.TrimSpace(cookie.Value)), []byte(state)) != 1 {
 		clearStateCookie()
+		respond.ValidationFailed(w, "invalid or missing state")
+		return
 	}
+	clearStateCookie()
 
 	code := strings.TrimSpace(r.URL.Query().Get("code"))
 	if code == "" {
@@ -79,13 +75,6 @@ func (d *Deps) ConnectedCallback(w http.ResponseWriter, r *http.Request) {
 			}
 			respond.ServiceErrorRequest(r, w, err)
 		}
-		return
-	}
-
-	if !stateValidated {
-		respond.JSON(w, http.StatusOK, connectedSessionResponse(res, map[string]any{
-			"token": res.Token,
-		}))
 		return
 	}
 

@@ -20,6 +20,12 @@ The production baseline is:
 - a durable POSIX filesystem mounted at `GIT_REPO_DIR`
 - `/readyz` for readiness and `/metrics` for Prometheus scraping
 
+Application-level anonymous rate limits key on the immediate peer address from
+`RemoteAddr`; spoofable `X-Forwarded-For` and `X-Real-IP` headers are ignored.
+When `gh-server` sits behind a reverse proxy, enforce per-client anonymous rate
+limits at the proxy or add an explicit trusted-proxy configuration before
+depending on AGS to distinguish clients behind that proxy.
+
 Single-node deployments may use a local persistent disk for `GIT_REPO_DIR`.
 Horizontally scaled deployments need shared POSIX-compatible storage for
 `GIT_REPO_DIR` so every instance can read and write the same bare repositories.

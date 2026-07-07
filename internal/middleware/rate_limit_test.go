@@ -72,6 +72,34 @@ func TestAPIRateLimitHeaders_FallsBackToClientIPAndPreservesRateLimitEndpointBud
 	requireRateLimitSnapshot(t, otherIP, 1, 1, 0)
 }
 
+func TestRateLimitIgnoresSpoofableForwardedHeaders(t *testing.T) {
+	t.Parallel()
+
+	handler := RateLimit(1, time.Hour)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+
+	first := httptest.NewRequest(http.MethodGet, "/api/v3/user", nil)
+	first.RemoteAddr = "198.51.100.10:1234"
+	first.Header.Set("X-Forwarded-For", "203.0.113.1")
+	first.Header.Set("X-Real-IP", "203.0.113.2")
+	firstRec := httptest.NewRecorder()
+	handler.ServeHTTP(firstRec, first)
+	if firstRec.Code != http.StatusNoContent {
+		t.Fatalf("first request: expected 204, got %d: %s", firstRec.Code, firstRec.Body.String())
+	}
+
+	second := httptest.NewRequest(http.MethodGet, "/api/v3/user", nil)
+	second.RemoteAddr = "198.51.100.10:1234"
+	second.Header.Set("X-Forwarded-For", "203.0.113.99")
+	second.Header.Set("X-Real-IP", "203.0.113.100")
+	secondRec := httptest.NewRecorder()
+	handler.ServeHTTP(secondRec, second)
+	if secondRec.Code != http.StatusTooManyRequests {
+		t.Fatalf("second request: expected 429, got %d: %s", secondRec.Code, secondRec.Body.String())
+	}
+}
+
 func TestAPIRateLimitHeaders_UsesGraphQLAndSearchResources(t *testing.T) {
 	t.Parallel()
 

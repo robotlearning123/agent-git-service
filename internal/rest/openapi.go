@@ -139,7 +139,7 @@ func buildRESTOpenAPIPaths() map[string]any {
 				param("error", "string"),
 				param("state", "string"),
 			), map[string]any{
-				"200": map[string]any{"description": "Direct agent callback without browser state returns durable token JSON; browser callback without console redirect returns a one-time AGS authorization code JSON."},
+				"200": map[string]any{"description": "Browser callback without console redirect returns a one-time AGS authorization code JSON."},
 				"302": map[string]any{"description": "Browser callback redirects to the console with a one-time AGS authorization code and PKCE verifier cookie."},
 			}),
 		},

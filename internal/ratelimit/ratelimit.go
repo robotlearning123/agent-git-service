@@ -510,18 +510,6 @@ func clientIP(r *http.Request) string {
 	if r == nil {
 		return "unknown"
 	}
-	if forwarded := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); forwarded != "" {
-		if first, _, ok := strings.Cut(forwarded, ","); ok {
-			forwarded = first
-		}
-		forwarded = strings.TrimSpace(forwarded)
-		if forwarded != "" {
-			return forwarded
-		}
-	}
-	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
-		return realIP
-	}
 	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
 	if err == nil && host != "" {
 		return host

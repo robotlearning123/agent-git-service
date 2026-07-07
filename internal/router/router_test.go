@@ -321,28 +321,16 @@ func TestConnectedLoginRoutes(t *testing.T) {
 		}
 	})
 
-	t.Run("direct callback without browser state returns durable token JSON", func(t *testing.T) {
+	t.Run("callback rejects missing browser state before code exchange", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/auth/connected/callback?code=connected-agent-code&state=agent-state", nil)
 		req.Header.Set("Accept", "text/html")
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)
-		if rec.Code != http.StatusOK {
-			t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("expected 422, got %d: %s", rec.Code, rec.Body.String())
 		}
-		var body map[string]any
-		if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
-			t.Fatalf("decode token response: %v", err)
-		}
-		token, _ := body["token"].(string)
-		if token == "" {
-			t.Fatalf("expected durable token in callback JSON, got %#v", body)
-		}
-		if body["type"] != "agent" || body["sub"] != "agent-sub" || body["subject_namespace"] != "workspace-1" || body["server_id"] != "workspace-1" {
-			t.Fatalf("unexpected callback JSON metadata: %#v", body)
-		}
-		var dbToken db.Token
-		if err := svc.DB.First(&dbToken, "value = ?", token).Error; err != nil {
-			t.Fatalf("expected durable token to remain usable: %v", err)
+		if !strings.Contains(rec.Body.String(), "invalid or missing state") {
+			t.Fatalf("expected missing state error, got %q", rec.Body.String())
 		}
 	})
 

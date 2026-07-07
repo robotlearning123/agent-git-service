@@ -129,14 +129,6 @@ func (l *fixedWindowLimiter) prune(now time.Time) {
 }
 
 func rateLimitClientKey(r *http.Request) string {
-	if forwardedFor := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); forwardedFor != "" {
-		if clientIP := strings.TrimSpace(strings.Split(forwardedFor, ",")[0]); clientIP != "" {
-			return clientIP
-		}
-	}
-	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
-		return realIP
-	}
 	if host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr)); err == nil && host != "" {
 		return host
 	}
