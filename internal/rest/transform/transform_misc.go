@@ -201,6 +201,19 @@ func Token(t db.Token) map[string]any {
 	}
 }
 
+// TokenListItem converts a db.Token to JSON for list responses, omitting the
+// raw secret value. The cleartext token is only ever returned once, from the
+// endpoint that mints it (CreateToken and the agent token-issue flows); list
+// endpoints must never echo it back, matching GitHub, which returns token
+// metadata but never the usable credential on list. Returning the secret here
+// would let any single token for an account read the cleartext of every other
+// token for that account, defeating revocation and switch-session expiry.
+func TokenListItem(t db.Token) map[string]any {
+	m := Token(t)
+	delete(m, "token")
+	return m
+}
+
 // Ruleset converts a db.Ruleset to GitHub REST API JSON.
 func Ruleset(rs db.Ruleset, repoFullName string) map[string]any {
 	var conditions any
