@@ -24,7 +24,7 @@ func (d *Deps) ListTokens(w http.ResponseWriter, r *http.Request) {
 	}
 	out := make([]any, len(tokens))
 	for i, tok := range tokens {
-		out[i] = transform.Token(tok)
+		out[i] = transform.TokenListItem(tok)
 	}
 	respond.JSON(w, 200, paginate(w, r, d.Svc.BaseURL, out, page, perPage))
 }
