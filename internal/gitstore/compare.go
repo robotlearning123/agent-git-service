@@ -169,6 +169,12 @@ func (s *Store) Contributors(ctx context.Context, fullName string) ([]string, er
 
 // LogBetweenTags returns the git log between two tags (or refs).
 func (s *Store) LogBetweenTags(ctx context.Context, fullName, from, to string) (string, error) {
+	// Validate revisions before they reach exec.CommandContext so a
+	// value like "--output=/path" can't be interpreted as a git flag.
+	// Mirrors the guard used by every other rev-taking method here.
+	if !IsValidRev(to) || (from != "" && !IsValidRev(from)) {
+		return "", fmt.Errorf("invalid tag revision")
+	}
 	dir, err := s.repoPath(ctx, fullName)
 	if err != nil {
 		return "", err
