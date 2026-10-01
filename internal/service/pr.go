@@ -243,15 +243,7 @@ func (s *Service) ListPRsFiltered(ctx context.Context, filter PRListFilter) ([]d
 	if base := strings.TrimSpace(filter.Base); base != "" {
 		q = q.Where("base_ref = ?", base)
 	}
-	if head := strings.TrimSpace(filter.Head); head != "" {
-		if owner, ref, ok := strings.Cut(head, ":"); ok {
-			q = q.Joins("JOIN repositories AS head_repos ON head_repos.id = pull_requests.head_repository_id").
-				Where("LOWER(head_repos.full_name) LIKE ?", strings.ToLower(owner)+"/%").
-				Where("head_ref = ?", ref)
-		} else {
-			q = q.Where("head_ref = ?", head)
-		}
-	}
+	q = applyPRHeadFilter(q, filter.Head)
 	q = applyPRMentionedFilter(q, filter.Mentioned)
 	orderColumn, orderDirection := prListOrder(filter.Sort, filter.Direction)
 	orderExpr := orderColumn + " " + orderDirection + ", pull_requests.number desc"
@@ -296,6 +288,22 @@ func (s *Service) ListPRsFiltered(ctx context.Context, filter PRListFilter) ([]d
 		offset += len(batch)
 	}
 	return matches, nil
+}
+
+// applyPRHeadFilter narrows the PR list by head, either "owner:branch"
+// (owner matched against the head repo full_name, wildcards escaped so
+// the owner matches literally) or a bare branch name.
+func applyPRHeadFilter(q *gorm.DB, head string) *gorm.DB {
+	head = strings.TrimSpace(head)
+	if head == "" {
+		return q
+	}
+	if owner, ref, ok := strings.Cut(head, ":"); ok {
+		return q.Joins("JOIN repositories AS head_repos ON head_repos.id = pull_requests.head_repository_id").
+			Where("LOWER(head_repos.full_name) LIKE ?", escapeLike(strings.ToLower(owner))+"/%").
+			Where("head_ref = ?", ref)
+	}
+	return q.Where("head_ref = ?", head)
 }
 
 func applyPRMentionedFilter(q *gorm.DB, mention string) *gorm.DB {

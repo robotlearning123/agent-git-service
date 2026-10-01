@@ -86,7 +86,7 @@ func (s *Service) ListOrgAuditLog(ctx context.Context, orgID uint, f AuditLogFil
 		Where("organization_id = ?", orgID)
 
 	if phrase := strings.TrimSpace(f.Phrase); phrase != "" {
-		like := "%" + phrase + "%"
+		like := "%" + escapeLike(phrase) + "%"
 		q = q.Where(
 			"action LIKE ? OR actor_login LIKE ? OR target_login LIKE ?",
 			like, like, like,
