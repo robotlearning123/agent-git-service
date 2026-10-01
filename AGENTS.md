@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `main.go` is the composition root (config, DB/Git wiring, listeners).
+- `cmd/gh-server/main.go` is the binary entrypoint; `server/` is the composition root (config, DB/Git wiring, listeners).
 - `internal/` contains backend modules by concern: `rest`, `graphql`, `service`, `db`, `gitstore`, `githttp`, `oauth`, `middleware`, `router`, and `testharness`.
 - `cli/` is the vendored GitHub CLI plus acceptance tests in `cli/acceptance/`.
 - `e2e/` contains shell-based end-to-end scripts (`bash` + `curl` + `jq`).
